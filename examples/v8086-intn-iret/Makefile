@@ -34,7 +34,7 @@ KERNEL_ISO:=$(KERNEL).iso
 ISO_DIR:=iso
 GRUB_CFG:=grub.cfg
 
-.PHONY: all clean bochs qemu qemu-iso dbg-qemu dbg-qemu-iso
+.PHONY: all clean bochs qemu qemu-iso qemu-dbg qemu-iso-dbg
 
 all:$(KERNEL_ELF) $(KERNEL_ISO)
 
@@ -53,7 +53,7 @@ qemu-dbg:$(KERNEL_ELF)
 		-ex 'break $(QEMU_BP)' \
 		-ex 'continue'
 
-dbg-qemu-iso:$(KERNEL_ISO)
+qemu-iso-dbg:$(KERNEL_ISO)
 	$(QEMU) -cdrom $(KERNEL_ISO) $(QEMUFLAGS) -S -s &
 	$(GDB) $(KERNEL_ELF) \
 		-ex 'target remote localhost:1234' \
