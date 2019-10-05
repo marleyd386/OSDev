@@ -1,0 +1,29 @@
+bits 16
+global int_iret_handler
+global int_retf2_handler
+extern rm_print_str_attr
+
+section .text
+
+int_iret_handler:
+    pusha
+    mov edx, 0x5f
+    mov eax, in_int_str_iret
+    call dword rm_print_str_attr
+    popa
+    stc
+    iret
+
+int_retf2_handler:
+    pusha
+    mov edx, 0x5f
+    mov eax, in_int_str_retf2
+    call dword rm_print_str_attr
+    popa
+    stc
+    retf 2
+
+section .data
+
+in_int_str_iret:  db "[In interrupt handler, returning w/IRET]", 10, 0
+in_int_str_retf2: db "[In interrupt handler, returning w/RETF 2]", 10, 0

@@ -1,0 +1,18 @@
+#include <stdint.h>
+#include "x86helper.h"
+#include "console.h"
+
+uint16_t vid_offset = 0;
+uint16_t vid_line = 0;
+
+fastcall void rm_print_str_attr (const char *str, uint8_t attr)
+{
+    while (*str) {
+        if (*str == '\n')
+            vid_offset = (++vid_line)*80;
+        else
+            write_uint16_fs ((vid_offset++)*2, (uint16_t)attr << 8 | *str);
+        str++;
+    }
+    return;
+}

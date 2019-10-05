@@ -1,0 +1,66 @@
+#include <stdint.h>
+#include "x86helper.h"
+#include "console.h"
+
+#define TEST_INTERRUPT 0x80
+
+extern void int_iret_handler (void);
+extern void int_retf2_handler (void);
+
+/* Clear Carry Flag (CF) and do a software interrupt.
+  `int n` only takes immediate values so we use self modifying code. */
+uint8_t test_soft_interrupt (uint8_t intno)
+{
+    uint8_t carry;
+    asm volatile (
+         "pusha\n\t"
+         /* Modify the INT $0 below with int_no */
+         "mov %b[int_no], 2f+1\n\t"
+         /* Use unconditional jump to clear instruction prefetch queue */
+         "jmp 1f\n"
+         "1:\n\t"
+         "clc\n"
+         "2:\n\t"
+         "int $0\n\t"
+         "popa\n\t"
+         /* Use setc in case we are using older GCC */
+         "setc %b[carry]\n\t"
+         : [carry]"=r"(carry)
+         : [int_no]"ri"(intno)
+    );
+
+    return carry;
+}
+
+void v86main()
+{
+    /* Rewrite the CS:IP of the test interrupts in the real mode IVT */
+    static uint32_t * const ivt_base = (uint32_t *)0x000;
+    uint8_t ret_cf;
+    ivt_base[TEST_INTERRUPT]     = (uint32_t)int_iret_handler;
+    ivt_base[TEST_INTERRUPT + 1] = (uint32_t)int_retf2_handler;
+
+    /* FS will be used as the text video segment */
+    set_fs (VIDEO_TEXT_SEG);
+
+    /* Test 'IRET' and 'RETF 2' mechanisms returning from an interrupt handler */
+    rm_print_str_attr ("[Testing int 0x80]\n", ATTR_BWHITE_ON_MAGENTA);
+    ret_cf = test_soft_interrupt (TEST_INTERRUPT);
+    if (ret_cf == 0)
+        rm_print_str_attr ("[Expecting CF=0, observed CF=0]\n", ATTR_BWHITE_ON_MAGENTA);
+    else
+        rm_print_str_attr ("[Expecting CF=0, observed CF=1]\n", ATTR_BWHITE_ON_RED);
+
+    rm_print_str_attr ("[Returned from int 0x80]\n\n", ATTR_BWHITE_ON_MAGENTA);
+    rm_print_str_attr ("[Testing int 0x81]\n", ATTR_BWHITE_ON_MAGENTA);
+    ret_cf = test_soft_interrupt (TEST_INTERRUPT + 1);
+    rm_print_str_attr ("[Returned from int 0x81]\n", ATTR_BWHITE_ON_MAGENTA);
+    if (ret_cf == 1)
+        rm_print_str_attr ("[Expecting CF=1, observed CF=1]\n\n", ATTR_BWHITE_ON_MAGENTA);
+    else
+        rm_print_str_attr ("[Expecting CF=1, observed CF=0]\n\n", ATTR_BWHITE_ON_RED);
+
+    /* ud2 is used to terminate v8086 mode */
+    rm_print_str_attr ("[Request exit from v8086]\n", ATTR_BWHITE_ON_MAGENTA);
+    asm ("ud2");
+}
