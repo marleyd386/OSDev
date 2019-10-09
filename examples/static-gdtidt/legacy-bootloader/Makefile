@@ -10,7 +10,7 @@ NASMFLAGS=-f elf32 -gdwarf
 LINK_SCRIPT=link.ld
 LINKFLAGS=-melf_i386 -T$(LINK_SCRIPT)
 BOCHS_CFG:=/dev/null
-QEMUFLAGS=-d int -no-shutdown -no-reboot
+QEMUFLAGS=
 
 OBJS_NASM=$(patsubst %.asm,%.o,$(wildcard *.asm))
 ASM_INCLUDES=$(wildcard *.inc)
