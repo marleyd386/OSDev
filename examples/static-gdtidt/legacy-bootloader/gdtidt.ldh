@@ -30,7 +30,7 @@ idt = .;
     MAKE_IDT_DESC(exc3, CODE32_SEL, 10001110b);
 idt_size = ABSOLUTE(. - idt);
 
-/* GDT record */
+/* IDTT record */
 . = ALIGN(4);
 SHORT(0);                      /* These 2 bytes align LONG(idt) on 4 byte boundary */
 idtr = .;
