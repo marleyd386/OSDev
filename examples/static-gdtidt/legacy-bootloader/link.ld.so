@@ -1,0 +1,78 @@
+OUTPUT_FORMAT("elf32-i386");
+ENTRY(_start);
+REAL_BASE = 0x00007c00;
+SECTIONS
+{
+    . = REAL_BASE;
+    .text : SUBALIGN(4) {
+        *(.text*);
+    }
+    .rodata : SUBALIGN(4) {
+        *(.rodata*);
+    }
+    .data : SUBALIGN(4) {
+        *(.data);
+
+    . = ALIGN(4);
+    gdt = .;
+    NULL_SEL = ABSOLUTE(. - gdt);
+    SHORT(0);
+    SHORT(0);
+    BYTE(0 >> 16);
+    BYTE(0);
+    BYTE((0 >> 16 & 0x0f) | (0 << 4)); BYTE(0 >> 24);
+
+    CODE32_SEL = ABSOLUTE(. - gdt);
+    SHORT(0x000fffff);
+    SHORT(0);
+    BYTE(0 >> 16);
+    BYTE(10011010b);
+    BYTE((0x000fffff >> 16 & 0x0f) | (1100b << 4));
+    BYTE(0 >> 24);
+
+    DATA32_SEL = ABSOLUTE(. - gdt);
+    SHORT(0x000fffff);
+    SHORT(0);
+    BYTE(0 >> 16);
+    BYTE(10010010b);
+    BYTE((0x000fffff >> 16 & 0x0f) | (1100b << 4));
+    BYTE(0 >> 24);
+    gdt_size = ABSOLUTE(. - gdt);
+
+    . = ALIGN(4);
+    idt = .;
+    SHORT(exc0 & 0x0000ffff);
+    SHORT(CODE32_SEL);
+    BYTE(0x00);
+    BYTE(10001110b);
+    SHORT(exc0 >> 16);
+    SHORT(exc1 & 0x0000ffff);
+    SHORT(CODE32_SEL);
+    BYTE(0x00);
+    BYTE(10001110b);
+    SHORT(exc1 >> 16);
+    SHORT(exc2 & 0x0000ffff);
+    SHORT(CODE32_SEL);
+    BYTE(0x00);
+    BYTE(10001110b);
+    SHORT(exc2 >> 16);
+    SHORT(exc3 & 0x0000ffff);
+    SHORT(CODE32_SEL);
+    BYTE(0x00);
+    BYTE(10001110b);
+    SHORT(exc3 >> 16);
+    idt_size = ABSOLUTE(. - idt);
+
+    }
+    .bootsig : AT(0x7dfe) {
+        SHORT (0xaa55);
+    }
+    .bss : SUBALIGN(4) {
+        *(COMMON);
+        *(.bss)
+    }
+    /DISCARD/ : {
+        *(.note.gnu.property)
+        *(.comment);
+    }
+}

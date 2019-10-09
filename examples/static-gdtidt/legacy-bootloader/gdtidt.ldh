@@ -1,0 +1,40 @@
+#ifndef GDTIDT_LDH
+#define GDTIDT_LDH
+
+#include "macros.ldh"
+
+/* GDT table */
+. = ALIGN(4);
+gdt = .;
+    NULL_SEL   = ABSOLUTE(. - gdt); MAKE_GDT_DESC(0, 0, 0, 0);
+    CODE32_SEL = ABSOLUTE(. - gdt); MAKE_GDT_DESC(0, 0x000fffff, 10011010b, 1100b);
+    DATA32_SEL = ABSOLUTE(. - gdt); MAKE_GDT_DESC(0, 0x000fffff, 10010010b, 1100b);
+    /* TSS structure tss_entry and TSS_SIZE are exported from an object file */
+    TSS32_SEL  = ABSOLUTE(. - gdt); MAKE_GDT_DESC(tss_entry, TSS_SIZE - 1, \
+                                                  10001001b, 0000b);
+gdt_size = ABSOLUTE(. - gdt);
+
+/* GDT record */
+. = ALIGN(4);
+SHORT(0);                      /* These 2 bytes align LONG(gdt) on 4 byte boundary */
+gdtr = .;
+    SHORT(gdt_size - 1);
+    LONG(gdt);
+
+/* IDT table */
+. = ALIGN(4);
+idt = .;
+    MAKE_IDT_DESC(exc0, CODE32_SEL, 10001110b);
+    MAKE_IDT_DESC(exc1, CODE32_SEL, 10001110b);
+    MAKE_IDT_DESC(exc2, CODE32_SEL, 10001110b);
+    MAKE_IDT_DESC(exc3, CODE32_SEL, 10001110b);
+idt_size = ABSOLUTE(. - idt);
+
+/* GDT record */
+. = ALIGN(4);
+SHORT(0);                      /* These 2 bytes align LONG(idt) on 4 byte boundary */
+idtr = .;
+    SHORT(idt_size - 1);
+    LONG(idt);
+
+#endif

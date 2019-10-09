@@ -1,0 +1,23 @@
+#ifndef MACROS_LDH
+#define MACROS_LDH
+
+/* Linker script C pre-processor macros */
+
+/* Macro to build a IDT descriptor entry */
+#define MAKE_IDT_DESC(offset, selector, access) \
+    SHORT(offset & 0x0000ffff); \
+    SHORT(selector); \
+    BYTE(0x00); \
+    BYTE(access); \
+    SHORT(offset >> 16);
+
+/* Macro to build a GDT descriptor entry */
+#define MAKE_GDT_DESC(base, limit, access, flags) \
+    SHORT(limit); \
+    SHORT(base); \
+    BYTE(base >> 16); \
+    BYTE(access); \
+    BYTE((limit >> 16 & 0x0f) | (flags << 4));\
+    BYTE(base >> 24);      
+
+#endif
